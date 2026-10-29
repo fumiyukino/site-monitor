@@ -2,7 +2,7 @@ name: サイト監視
 
 on:
   schedule:
-    - cron: '*/15 * * * *'   # 15分おき（GitHub が混んでいると数分〜十数分遅れることがある）
+    - cron: '*/5 * * * *'    # 5分おき（GitHub の最短。混んでいると数分〜十数分遅れることがある）
   workflow_dispatch:
     inputs:
       test_line:
