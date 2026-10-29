@@ -1,0 +1,60 @@
+name: サイト監視
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'   # 15分おき（GitHub が混んでいると数分〜十数分遅れることがある）
+  workflow_dispatch:
+
+concurrency: site-check
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # 前回の異常の一覧を取り出す（「新しく壊れた」「直った」のときだけ知らせるため）
+      - uses: actions/cache/restore@v4
+        with:
+          path: prev
+          key: state-${{ github.run_id }}
+          restore-keys: state-
+
+      - name: 6サイトを確かめる
+        id: check
+        run: |
+          ./check.sh && echo "ok=true" >> "$GITHUB_OUTPUT" || echo "ok=false" >> "$GITHUB_OUTPUT"
+          cat summary.md >> "$GITHUB_STEP_SUMMARY"
+          touch problems.txt
+          mkdir -p prev && touch prev/problems.txt
+          if ! cmp -s problems.txt prev/problems.txt; then
+            if [ -s problems.txt ]; then echo "change=broken" >> "$GITHUB_OUTPUT"
+            else echo "change=recovered" >> "$GITHUB_OUTPUT"; fi
+          fi
+          cp problems.txt prev/problems.txt
+
+      - uses: actions/cache/save@v4
+        with:
+          path: prev
+          key: state-${{ github.run_id }}
+
+      - name: LINE に知らせる
+        if: steps.check.outputs.change != '' && env.LINE_TOKEN != ''
+        env:
+          LINE_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+          LINE_TO: ${{ secrets.LINE_USER_ID }}
+          CHANGE: ${{ steps.check.outputs.change }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ "$CHANGE" = broken ]; then head="⚠️ サイトに異常があります"; else head="✅ サイトは全部もとに戻りました"; fi
+          text=$(printf '%s\n\n%s\n\n詳しく: %s' "$head" "$(cat problems.txt)" "$RUN_URL")
+          jq -n --arg to "$LINE_TO" --arg t "$text" '{to:$to, messages:[{type:"text", text:$t}]}' \
+            | curl -sf -X POST https://api.line.me/v2/bot/message/push \
+                -H "Authorization: Bearer $LINE_TOKEN" -H 'Content-Type: application/json' -d @-
+
+      # 新しく異常が出たときだけ失敗にする → GitHub から失敗のメールが届く
+      - name: 新しい異常があればメールで知らせる
+        if: steps.check.outputs.change == 'broken'
+        run: |
+          echo "::error::$(tr '\n' ' ' < problems.txt)"
+          exit 1

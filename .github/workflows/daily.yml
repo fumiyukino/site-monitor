@@ -1,0 +1,24 @@
+name: 毎朝の記録
+
+# 毎朝9時（日本時間）に状態を status.json として残す。
+# 監視画面のもとデータになり、リポジトリが動き続けることで
+# 「60日更新がないと定期実行が止まる」GitHub の仕組みも避けられる。
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: ./check.sh || true
+      - run: |
+          git config user.name 'site-monitor'
+          git config user.email 'site-monitor@users.noreply.github.com'
+          git add status.json summary.md
+          git commit -m "毎朝の記録 $(TZ=Asia/Tokyo date +%F)" && git push || echo "変化なし"
