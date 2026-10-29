@@ -16,3 +16,12 @@
 SSL 証明書は、残りが21日を切ったら異常として扱う。
 
 このリポジトリは公開にしている（GitHub Actions を無料で使い放題にするため）。トークンやパスワードは置かず、すべて Secrets に入れること。
+
+## LINE に話しかけると今の状態を返す
+
+監視用の LINE 公式アカウントに何か送ると、6サイトをその場で開いて確かめ、状態とリンクを返す。
+[line-bot/](line-bot/) の Cloudflare Worker（https://site-monitor-line.fino-bd8.workers.dev）が LINE の Webhook を受けている。
+
+- 更新：`cd line-bot && npx wrangler@4 deploy`（Cloudflare アカウント fino@crecom.biz）
+- 秘密の値は Cloudflare の画面（Workers & Pages → site-monitor-line → 設定）の `LINE_CHANNEL_SECRET`・`LINE_CHANNEL_ACCESS_TOKEN`
+- 見張るサイトはこのリポジトリの sites.tsv を読むので、サイトを足すときは sites.tsv だけ直せばよい
