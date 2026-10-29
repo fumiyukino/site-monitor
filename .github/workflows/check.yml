@@ -50,11 +50,9 @@ jobs:
       - name: LINE にテストの通知を送る
         if: inputs.test_line
         run: |
-          [ -n "$LINE_TOKEN" ] && [ -n "$LINE_TO" ] || { echo "::error::Secrets に LINE_CHANNEL_ACCESS_TOKEN と LINE_USER_ID を入れてください"; exit 1; }
+          [ -n "$LINE_TOKEN" ] || { echo "::error::Secrets に LINE_CHANNEL_ACCESS_TOKEN を入れてください"; exit 1; }
           text=$(printf '🔔 サイト監視のテスト通知です。\nこれが届いていれば、異常のときも LINE に届きます。\n\n%s' "$(sed -n '5,$p' summary.md | cut -d'|' -f2,3 | tr -d '|')")
-          jq -n --arg to "$LINE_TO" --arg t "$text" '{to:$to, messages:[{type:"text", text:$t}]}' \
-            | curl -sS --fail-with-body -X POST https://api.line.me/v2/bot/message/push \
-                -H "Authorization: Bearer $LINE_TOKEN" -H 'Content-Type: application/json' -d @-
+          ./line_send.sh "$text"
 
       - name: LINE に知らせる
         if: steps.check.outputs.change != '' && env.LINE_TOKEN != ''
@@ -64,9 +62,7 @@ jobs:
         run: |
           if [ "$CHANGE" = broken ]; then head="⚠️ サイトに異常があります"; else head="✅ サイトは全部もとに戻りました"; fi
           text=$(printf '%s\n\n%s\n\n詳しく: %s' "$head" "$(cat problems.txt)" "$RUN_URL")
-          jq -n --arg to "$LINE_TO" --arg t "$text" '{to:$to, messages:[{type:"text", text:$t}]}' \
-            | curl -sf -X POST https://api.line.me/v2/bot/message/push \
-                -H "Authorization: Bearer $LINE_TOKEN" -H 'Content-Type: application/json' -d @-
+          ./line_send.sh "$text"
 
       # 新しく異常が出たときだけ失敗にする → GitHub から失敗のメールが届く
       - name: 新しい異常があればメールで知らせる

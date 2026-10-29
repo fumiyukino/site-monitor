@@ -11,7 +11,7 @@
 新しく異常が出たときと、直ったときだけ知らせる。異常が続いているあいだは、何度も知らせない。
 
 - **メール**：新しく異常が出ると GitHub Actions が失敗し、GitHub から失敗のメールが届く
-- **LINE**：リポジトリの Secrets に `LINE_CHANNEL_ACCESS_TOKEN` と `LINE_USER_ID` を入れると届く
+- **LINE**：リポジトリの Secrets に `LINE_CHANNEL_ACCESS_TOKEN` を入れると、監視用の公式アカウントの友だち（オーナー）に届く。`LINE_USER_ID` も入れればその人だけに送る
 
 SSL 証明書は、残りが21日を切ったら異常として扱う。
 
