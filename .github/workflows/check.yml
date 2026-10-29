@@ -4,12 +4,21 @@ on:
   schedule:
     - cron: '*/15 * * * *'   # 15分おき（GitHub が混んでいると数分〜十数分遅れることがある）
   workflow_dispatch:
+    inputs:
+      test_line:
+        description: 'LINE にテストの通知を送る'
+        type: boolean
+        default: false
 
 concurrency: site-check
 
 jobs:
   check:
     runs-on: ubuntu-latest
+    # if: の中では secrets も step の env も使えないので、ジョブの env に置く
+    env:
+      LINE_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+      LINE_TO: ${{ secrets.LINE_USER_ID }}
     steps:
       - uses: actions/checkout@v4
 
@@ -38,11 +47,18 @@ jobs:
           path: prev
           key: state-${{ github.run_id }}
 
+      - name: LINE にテストの通知を送る
+        if: inputs.test_line
+        run: |
+          [ -n "$LINE_TOKEN" ] && [ -n "$LINE_TO" ] || { echo "::error::Secrets に LINE_CHANNEL_ACCESS_TOKEN と LINE_USER_ID を入れてください"; exit 1; }
+          text=$(printf '🔔 サイト監視のテスト通知です。\nこれが届いていれば、異常のときも LINE に届きます。\n\n%s' "$(sed -n '5,$p' summary.md | cut -d'|' -f2,3 | tr -d '|')")
+          jq -n --arg to "$LINE_TO" --arg t "$text" '{to:$to, messages:[{type:"text", text:$t}]}' \
+            | curl -sS --fail-with-body -X POST https://api.line.me/v2/bot/message/push \
+                -H "Authorization: Bearer $LINE_TOKEN" -H 'Content-Type: application/json' -d @-
+
       - name: LINE に知らせる
         if: steps.check.outputs.change != '' && env.LINE_TOKEN != ''
         env:
-          LINE_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
-          LINE_TO: ${{ secrets.LINE_USER_ID }}
           CHANGE: ${{ steps.check.outputs.change }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
