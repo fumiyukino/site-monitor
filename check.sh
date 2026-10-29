@@ -1,11 +1,12 @@
 #!/bin/bash
 # sites.tsv の各サイトを開いて、ステータス・PHP の致命的エラー・SSL 期限を確かめる。
 # 異常が1つでもあれば exit 1（GitHub Actions が失敗 → メール通知）。
-# 結果は status.json と、人が読む要約 summary.md に書き出す。
+# 結果は status.json と、人が読む要約 summary.md、LINE 用の一覧 line_status.txt（サイトごとに印・名前・リンク）に書き出す。
 SSL_WARN_DAYS=${SSL_WARN_DAYS:-21}
 now=$(date -u +%s)
 problems=()
 rows=()
+line_rows=()
 json='[]'
 
 while IFS=$'\t' read -r name url ok_codes host; do
@@ -39,7 +40,8 @@ while IFS=$'\t' read -r name url ok_codes host; do
     days=""; state="異常"; note="${note:+$note / }SSL 証明書を読めない"
   fi
 
-  [[ "$state" == "異常" ]] && problems+=("$name: $note ($url)")
+  [[ "$state" == "異常" ]] && problems+=("⚠️ ${name}：${note}"$'\n'"$url")
+  if [[ "$state" == "異常" ]]; then line_rows+=("⚠️ ${name}：${note}"$'\n'"$url"); else line_rows+=("✅ ${name}（${time_ms}ms）"$'\n'"$url"); fi
   rows+=("| $name | $state | $code | ${time_ms}ms | ${days:-?} 日 | $note |")
   json=$(jq -c --arg n "$name" --arg u "$url" --arg s "$state" --arg c "$code" \
     --argjson t "${time_ms:-0}" --arg d "$days" --arg note "$note" \
@@ -57,9 +59,10 @@ jq -n --arg at "$checked_at" --argjson sites "$json" '{checked_at:$at, sites:$si
   printf '%s\n' "${rows[@]}"
 } > summary.md
 cat summary.md
+( IFS=$'\n'; printf '%s\n\n' "${line_rows[@]}" ) > line_status.txt
 
 if (( ${#problems[@]} > 0 )); then
-  printf '%s\n' "${problems[@]}" > problems.txt
+  printf '%s\n\n' "${problems[@]}" > problems.txt
   echo; echo "異常あり:"; cat problems.txt
   exit 1
 fi

@@ -1,0 +1,5 @@
+# サイト監視の LINE 返事係。デプロイ：cd line-bot && npx wrangler@3 deploy
+# 秘密の値：npx wrangler@3 secret put LINE_CHANNEL_SECRET / LINE_CHANNEL_ACCESS_TOKEN（ここには書かない。公開リポジトリのため）
+name = "site-monitor-line"
+main = "index.js"
+compatibility_date = "2026-09-01"

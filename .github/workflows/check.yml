@@ -51,7 +51,7 @@ jobs:
         if: inputs.test_line
         run: |
           [ -n "$LINE_TOKEN" ] || { echo "::error::Secrets に LINE_CHANNEL_ACCESS_TOKEN を入れてください"; exit 1; }
-          text=$(printf '🔔 サイト監視のテスト通知です。\nこれが届いていれば、異常のときも LINE に届きます。\n\n%s' "$(sed -n '5,$p' summary.md | cut -d'|' -f2,3 | tr -d '|')")
+          text=$(printf '🔔 サイト監視のテスト通知です。\nこれが届いていれば、異常のときも LINE に届きます。\n\n%s' "$(cat line_status.txt)")
           ./line_send.sh "$text"
 
       - name: LINE に知らせる
@@ -60,8 +60,8 @@ jobs:
           CHANGE: ${{ steps.check.outputs.change }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          if [ "$CHANGE" = broken ]; then head="⚠️ サイトに異常があります"; else head="✅ サイトは全部もとに戻りました"; fi
-          text=$(printf '%s\n\n%s\n\n詳しく: %s' "$head" "$(cat problems.txt)" "$RUN_URL")
+          if [ "$CHANGE" = broken ]; then head="⚠️ サイトに異常があります"; body=$(cat problems.txt); else head="✅ サイトは全部もとに戻りました"; body=$(cat line_status.txt); fi
+          text=$(printf '%s\n\n%s\n\n詳しく: %s' "$head" "$body" "$RUN_URL")
           ./line_send.sh "$text"
 
       # 新しく異常が出たときだけ失敗にする → GitHub から失敗のメールが届く
