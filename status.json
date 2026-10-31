@@ -1,13 +1,13 @@
 {
-  "checked_at": "2026-10-30 12:31 JST",
+  "checked_at": "2026-10-31 12:15 JST",
   "sites": [
     {
       "name": "宿命鑑定所",
       "url": "https://shukukan.net/",
       "state": "正常",
       "http": "401",
-      "ms": 647,
-      "ssl_days": 82,
+      "ms": 714,
+      "ssl_days": 81,
       "note": ""
     },
     {
@@ -15,8 +15,8 @@
       "url": "https://internpath.net/login_76603",
       "state": "正常",
       "http": "200",
-      "ms": 1638,
-      "ssl_days": 79,
+      "ms": 452,
+      "ssl_days": 78,
       "note": ""
     },
     {
@@ -24,8 +24,8 @@
       "url": "https://internpath.jp/",
       "state": "正常",
       "http": "200",
-      "ms": 1119,
-      "ssl_days": 43,
+      "ms": 1075,
+      "ssl_days": 42,
       "note": ""
     },
     {
@@ -33,8 +33,8 @@
       "url": "https://www.crecom.co.jp/",
       "state": "正常",
       "http": "200",
-      "ms": 659,
-      "ssl_days": 82,
+      "ms": 945,
+      "ssl_days": 81,
       "note": ""
     },
     {
@@ -42,17 +42,17 @@
       "url": "https://asovi.jp/login.php",
       "state": "正常",
       "http": "200",
-      "ms": 337,
-      "ssl_days": 54,
+      "ms": 413,
+      "ssl_days": 53,
       "note": ""
     },
     {
       "name": "Rensta",
       "url": "https://rensta.jp/",
       "state": "正常",
-      "http": "200",
-      "ms": 438,
-      "ssl_days": 48,
+      "http": "401",
+      "ms": 204,
+      "ssl_days": 47,
       "note": ""
     }
   ]
